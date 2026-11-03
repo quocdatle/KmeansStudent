@@ -81,26 +81,49 @@ Kmeans/
 
 ## ⚙️ Hướng Dẫn Cài Đặt & Khởi Chạy
 
-### 1. Cài đặt môi trường ảo Python
+### 1. Clone repository & mở thư mục dự án
+
+```bash
+git clone https://github.com/quocdatle/KmeansStudent.git
+cd KmeansStudent
+```
+
+### 2. Cài đặt môi trường ảo Python
 
 ```bash
 # Tạo môi trường ảo
 python -m venv venv
 
-# Kích hoạt môi trường (Windows PowerShell)
+# Kích hoạt môi trường:
+# Windows (PowerShell):
 .\venv\Scripts\Activate.ps1
+# (Lưu ý: Nếu gặp lỗi ExecutionPolicy trên PowerShell, chạy trước: Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass)
+
+# Windows (Command Prompt):
+venv\Scripts\activate.bat
+
+# macOS / Linux:
+source venv/bin/activate
 
 # Cài đặt các thư viện cần thiết
 pip install -r requirements.txt
 ```
 
-### 2. Khởi chạy ứng dụng
+### 3. Khởi chạy ứng dụng
 
 ```bash
-.\.venv\Scripts\python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+# Cách 1: Khởi chạy khi đã kích hoạt môi trường ảo
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+
+# Cách 2: Khởi chạy trực tiếp bằng python trong venv (không cần kích hoạt môi trường)
+# Windows:
+.\venv\Scripts\python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+
+# Linux / macOS:
+./venv/bin/python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-### 3. Trải nghiệm hệ thống
+### 4. Trải nghiệm hệ thống
 
 - **Giao diện Web:** Truy cập trình duyệt tại [http://127.0.0.1:8000](http://127.0.0.1:8000)
 - **Tài liệu Swagger API Docs:** Truy cập [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)

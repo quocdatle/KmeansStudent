@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K-Means Student Clustering System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+    <!-- Header -->
+    <header class="bg-indigo-600 text-white shadow-md py-4 px-6 mb-6">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold tracking-tight">🎓 Phân Cụm Sinh Viên (K-Means Clustering)</h1>
+            <span class="text-sm bg-indigo-700 px-3 py-1 rounded-full border border-indigo-400">FastAPI & Scikit-Learn</span>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 pb-12 space-y-8">
+        <!-- Bước 1: Chọn Dataset -->
+        <section class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <h2 class="text-lg font-semibold text-indigo-700 mb-4 flex items-center gap-2">
+                <span class="bg-indigo-100 text-indigo-700 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold">1</span>
+                Chọn hoặc Tải lên Dữ liệu (CSV)
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                <div class="flex items-center gap-3">
+                    <button id="btnLoadSample" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition shadow-sm">
+                        📁 Dùng Dataset Mẫu (student_sample.csv)
+                    </button>
+                    <span class="text-slate-400">hoặc</span>
+                </div>
+                <div>
+                    <input type="file" id="fileInput" accept=".csv" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                </div>
+            </div>
+
+            <!-- Preview dữ liệu -->
+            <div id="datasetPreview" class="mt-6 hidden">
+                <h3 class="text-sm font-semibold text-slate-600 mb-2">Xem trước dữ liệu: <span id="previewFilename" class="text-indigo-600 font-mono"></span></h3>
+                <div class="overflow-x-auto border border-slate-200 rounded-lg">
+                    <table id="previewTable" class="min-w-full text-xs text-left">
+                        <thead class="bg-slate-100 text-slate-700 uppercase font-bold"></thead>
+                        <tbody class="divide-y divide-slate-200"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bước 2: Cấu hình Tiền xử lý & Chọn K -->
+        <section class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <h2 class="text-lg font-semibold text-indigo-700 mb-4 flex items-center gap-2">
+                <span class="bg-indigo-100 text-indigo-700 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold">2</span>
+                Tiền Xử Lý & Xác Định Số Cụm K (Elbow & Silhouette)
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Phương pháp Chuẩn hóa (Scaling):</label>
+                    <select id="scalingMethod" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white">
+                        <option value="standard">StandardScaler (Mean=0, Std=1 - Khuyến nghị)</option>
+                        <option value="minmax">MinMaxScaler (Dải 0 - 1)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Đặc trưng đưa vào mô hình:</label>
+                    <div id="featureList" class="flex flex-wrap gap-2 text-xs text-slate-600 pt-1">
+                        Chưa nạp dữ liệu...
+                    </div>
+                </div>
+                <div class="flex items-end">
+                    <button id="btnRunElbow" class="w-full bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg font-medium text-sm transition">
+                        📈 Phân tích Elbow & Silhouette
+                    </button>
+                </div>
+            </div>
+
+            <!-- Biểu đồ Elbow & Silhouette -->
+            <div id="analysisCharts" class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 hidden">
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                    <h3 class="text-sm font-semibold text-slate-700 mb-2 text-center">Phương pháp Elbow (Inertia)</h3>
+                    <canvas id="elbowChart"></canvas>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                    <h3 class="text-sm font-semibold text-slate-700 mb-2 text-center">Hệ số Silhouette Score</h3>
+                    <canvas id="silhouetteChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bước 3: Huấn luyện K-Means & Trực quan hóa PCA -->
+        <section class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <h2 class="text-lg font-semibold text-indigo-700 mb-4 flex items-center gap-2">
+                <span class="bg-indigo-100 text-indigo-700 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold">3</span>
+                Huấn Luyện Phân Cụm K-Means & Giảm Chiều PCA (2D)
+            </h2>
+            <div class="flex items-center gap-4 mb-6">
+                <div>
+                    <label class="text-xs font-semibold text-slate-600 mr-2">Chọn số cụm K:</label>
+                    <input type="number" id="inputK" min="2" max="10" value="3" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm w-20">
+                </div>
+                <button id="btnTrainKMeans" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg font-medium text-sm transition">
+                    🚀 Tiến Hành Phân Cụm
+                </button>
+            </div>
+
+            <div id="clusteringResults" class="space-y-6 hidden">
+                <!-- Đồ thị Scatter PCA 2D -->
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                    <h3 class="text-sm font-semibold text-slate-700 mb-2 text-center">Không gian 2D các cụm (PCA Projection)</h3>
+                    <canvas id="pcaChart" class="max-h-96"></canvas>
+                </div>
+
+                <!-- Hồ sơ cụm (Profiles) -->
+                <div>
+                    <h3 class="text-base font-semibold text-slate-800 mb-3">📋 Hồ sơ từng cụm (Cluster Profiles)</h3>
+                    <div id="clusterProfilesGrid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bước 4: Dự đoán sinh viên mới -->
+        <section class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <h2 class="text-lg font-semibold text-indigo-700 mb-4 flex items-center gap-2">
+                <span class="bg-indigo-100 text-indigo-700 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold">4</span>
+                Dự Đoán Cụm & Giải Thích Cho Sinh Viên Mới
+            </h2>
+            <div id="predictFormContainer" class="space-y-4">
+                <p class="text-sm text-slate-500">Vui lòng hoàn thành phân cụm ở Bước 3 trước khi nhập thông tin dự đoán.</p>
+            </div>
+            <div id="predictResult" class="mt-4 p-4 rounded-lg bg-indigo-50 border border-indigo-200 hidden"></div>
+        </section>
+    </main>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
