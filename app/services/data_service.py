@@ -21,10 +21,30 @@ class DataService:
 
     @staticmethod
     def load_dataframe(file_id: str) -> pd.DataFrame:
-        """Đọc file CSV thành pandas DataFrame."""
+        """Đọc file CSV thành pandas DataFrame, tự động nhận diện dấu phân cách và chuẩn hóa kiểu số."""
         path = DataService.get_file_path(file_id)
         try:
-            df = pd.read_csv(path)
+            # Tự động nhận diện dấu phân cách (hỗ trợ cả dấu ',', ';', '\t')
+            try:
+                df = pd.read_csv(path, sep=None, engine="python")
+            except Exception:
+                # Nếu sep=None lỗi, thử lần lượt các dấu phân cách phổ biến
+                try:
+                    df = pd.read_csv(path, sep=";")
+                except Exception:
+                    df = pd.read_csv(path, sep=",")
+
+            # Làm sạch khoảng trắng tên cột
+            df.columns = [str(c).strip().strip('"').strip("'") for c in df.columns]
+
+            # Tự động chuyển đổi các cột số nhưng bị lưu dưới dạng chuỗi (ví dụ: "0", "11") sang numeric
+            for col in df.columns:
+                if df[col].dtype == object:
+                    converted = pd.to_numeric(df[col].astype(str).str.strip().str.strip('"'), errors="coerce")
+                    # Nếu hơn 80% giá trị hợp lệ sau khi convert sang số thì coi đó là cột số
+                    if converted.notnull().sum() > 0 and (converted.notnull().sum() / len(df)) >= 0.8:
+                        df[col] = converted
+
             return df
         except Exception as e:
             raise AppException(f"Lỗi khi đọc file CSV: {str(e)}", status_code=400)

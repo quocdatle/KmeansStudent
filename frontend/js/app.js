@@ -100,12 +100,16 @@ function handleDatasetLoaded(fileId, data) {
 
     // Hiển thị danh sách checkbox chọn features
     const featureContainer = document.getElementById("featureList");
-    featureContainer.innerHTML = currentNumericColumns.map(col => `
-        <label class="inline-flex items-center gap-1.5 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200 cursor-pointer">
-            <input type="checkbox" name="features" value="${col}" checked class="rounded text-indigo-600 focus:ring-indigo-500">
-            <span>${col}</span>
-        </label>
-    `).join("");
+    if (currentNumericColumns.length === 0) {
+        featureContainer.innerHTML = `<span class="text-rose-500 font-medium text-xs">⚠️ Không tìm thấy đặc trưng số nào để phân tích!</span>`;
+    } else {
+        featureContainer.innerHTML = currentNumericColumns.map(col => `
+            <label class="inline-flex items-center gap-1.5 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200 cursor-pointer">
+                <input type="checkbox" name="features" value="${col}" checked class="rounded text-indigo-600 focus:ring-indigo-500">
+                <span>${col}</span>
+            </label>
+        `).join("");
+    }
 }
 
 function updateSelectedFeatures() {
